@@ -39,13 +39,14 @@ function App() {
       } else {
         setStatus("warning");
       }
-
+      
     } catch (error) {
+      console.log(error);
       setResult("Backend connection failed.");
       setStatus("warning");
       setConfidence(0);
     }
-
+   
     setLoading(false);
   };
 
