@@ -8,7 +8,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
 
-  const analyzeReview = () => {
+  const analyzeReview = async () => {
     if (review.trim() === "") {
       setResult("Please enter a review first.");
       setStatus("warning");
@@ -18,30 +18,35 @@ function App() {
 
     setLoading(true);
 
-    setTimeout(() => {
-      const text = review.toLowerCase();
+    try {
+      const response = await fetch("https://fake-review-detector-backend-ic20.onrender.com/api/predict/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ review }),
+      });
 
-      if (
-        text.includes("buy now") ||
-        text.includes("best product ever") ||
-        text.includes("must buy") ||
-        text.includes("amazing amazing")
-      ) {
-        setResult("Likely Fake");
+      const data = await response.json();
+
+      setResult(data.prediction);
+      setConfidence(parseFloat(data.confidence));
+
+      if (data.prediction.toLowerCase().includes("fake")) {
         setStatus("fake");
-        setConfidence(88);
-      } else if (text.length < 8) {
-        setResult("Review too short");
-        setStatus("warning");
-        setConfidence(0);
-      } else {
-        setResult("Likely Real");
+      } else if (data.prediction.toLowerCase().includes("real")) {
         setStatus("real");
-        setConfidence(91);
+      } else {
+        setStatus("warning");
       }
 
-      setLoading(false);
-    }, 1200);
+    } catch (error) {
+      setResult("Backend connection failed.");
+      setStatus("warning");
+      setConfidence(0);
+    }
+
+    setLoading(false);
   };
 
   const clearAll = () => {
@@ -66,7 +71,7 @@ function App() {
         </div>
 
         <p className="subtitle">
-          Fake review detection using a custom BERT model.
+          Fake review detection using DistilBERT.
         </p>
 
         <textarea
@@ -99,7 +104,9 @@ function App() {
                 ></div>
               </div>
 
-              <p className="confidence-text">{confidence}% Confidence</p>
+              <p className="confidence-text">
+                {confidence}% Confidence
+              </p>
             </>
           )}
         </div>
